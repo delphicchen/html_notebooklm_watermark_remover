@@ -1,0 +1,6 @@
+# dev-only tooling for headless-browser verification (see test_fixtures/verify.js)
+node_modules/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
