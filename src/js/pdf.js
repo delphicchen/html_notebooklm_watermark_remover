@@ -162,21 +162,21 @@
 
       return chain.then(function () {
         if (!manual && patched === 0) {
-          return result(new Blob([origBytes], { type: 'application/pdf' }), false,
-            '未偵測到浮水印 · no watermark detected');
+          return result(new Blob([origBytes], { type: 'application/pdf' }), false, 'noWatermark', null);
         }
         return libDoc.save().then(function (out) {
           return result(new Blob([out], { type: 'application/pdf' }), patched > 0,
-            patched + '/' + pageCount + ' 頁已清除 · pages cleaned');
+            'pdfCleaned', { n: patched, t: pageCount });
         });
       });
 
-      function result(blob, found, message) {
+      function result(blob, found, messageKey, messageParams) {
         return {
           ok: true, found: found, kind: 'pdf',
           name: NLM.withSuffix(file.name, '_cleaned'),
           blob: blob, mime: 'application/pdf', pageCount: pageCount,
-          previewBefore: preview.before, previewAfter: preview.after, message: message
+          previewBefore: preview.before, previewAfter: preview.after,
+          messageKey: messageKey, messageParams: messageParams
         };
       }
     });

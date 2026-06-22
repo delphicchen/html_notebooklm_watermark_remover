@@ -29,17 +29,16 @@
       var box = el('div', 'nlm-modal-box');
       overlay.appendChild(box);
 
-      box.appendChild(el('div', 'nlm-modal-title', '手動框選浮水印 · Manual mask — ' + (rep.label || '')));
-      var hint = el('div', 'nlm-modal-hint',
-        '用「矩形」拖曳框住浮水印，或用「筆刷」塗抹。框越貼合，背景重建越乾淨。');
+      box.appendChild(el('div', 'nlm-modal-title', NLM.t('mTitle') + (rep.label ? ' — ' + rep.label : '')));
+      var hint = el('div', 'nlm-modal-hint', NLM.t('mHint'));
       box.appendChild(hint);
 
       // toolbar
       var bar = el('div', 'nlm-tools');
-      var bRect = btn('▭ 矩形', true), bBrush = btn('🖌 筆刷', false);
-      var bUndo = btn('↶ 復原', false), bClear = btn('✕ 清除', false);
+      var bRect = btn(NLM.t('mRect'), true), bBrush = btn(NLM.t('mBrush'), false);
+      var bUndo = btn(NLM.t('mUndo'), false), bClear = btn(NLM.t('mClear'), false);
       var brushWrap = el('label', 'nlm-brush');
-      brushWrap.appendChild(document.createTextNode('筆刷大小'));
+      brushWrap.appendChild(document.createTextNode(NLM.t('mBrushSize')));
       var brushRange = document.createElement('input');
       brushRange.type = 'range'; brushRange.min = '1'; brushRange.max = '12'; brushRange.value = '3';
       brushWrap.appendChild(brushRange);
@@ -58,8 +57,8 @@
 
       // actions
       var actions = el('div', 'nlm-modal-actions');
-      var bApply = btn('套用並重建 · Apply', false); bApply.classList.add('primary');
-      var bCancel = btn('取消 · Cancel', false);
+      var bApply = btn(NLM.t('mApply'), false); bApply.classList.add('primary');
+      var bCancel = btn(NLM.t('mCancel'), false);
       actions.appendChild(bCancel); actions.appendChild(bApply);
       box.appendChild(actions);
 

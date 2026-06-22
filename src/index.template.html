@@ -12,50 +12,70 @@
       <div class="brand">
         <span class="logo">✦</span>
         <div>
-          <h1>NotebookLM 浮水印移除工具</h1>
-          <p>離線執行 · 不上傳任何檔案 · Offline watermark remover</p>
+          <h1 data-i18n="appTitle">NotebookLM 浮水印移除工具</h1>
+          <p data-i18n="appSubtitle">離線執行 · 不上傳任何檔案 · 完全在本機處理</p>
         </div>
       </div>
-      <span class="pill">100% 本機處理</span>
+      <div class="hdr-right">
+        <button id="nlm-lang" class="pill lang" type="button" title="中文 / English" data-i18n="langToggle">EN</button>
+        <span class="pill" data-i18n="pill">100% 本機處理</span>
+      </div>
     </div>
   </header>
 
   <main class="wrap">
-    <section id="nlm-drop" class="drop" tabindex="0" role="button" aria-label="選擇檔案">
+    <section id="nlm-drop" class="drop" tabindex="0" role="button" aria-label="file picker">
       <div class="drop-inner">
         <div class="drop-icon">⬇</div>
-        <div class="drop-title">拖放檔案到這裡，或點此選擇</div>
-        <div class="drop-sub">支援 PNG · JPG · JPEG · WEBP · PDF · PPTX</div>
+        <div class="drop-title" data-i18n="dropTitle">拖放檔案到這裡，或點此選擇</div>
+        <div class="drop-sub" data-i18n="dropSub">支援 PNG · JPG · JPEG · WEBP · PDF · PPTX</div>
       </div>
       <input type="file" id="nlm-input" multiple
              accept=".png,.jpg,.jpeg,.webp,.pdf,.pptx" hidden>
     </section>
 
     <div class="toolbar">
-      <button id="nlm-process" class="nlm-btn primary">▶ 處理全部</button>
-      <button id="nlm-download" class="nlm-btn">⬇ 下載全部 (zip)</button>
-      <button id="nlm-clear" class="nlm-btn ghost">清空</button>
+      <button id="nlm-process" class="nlm-btn primary" data-i18n="btnProcessAll">▶ 處理全部</button>
+      <button id="nlm-download" class="nlm-btn" data-i18n="btnDownloadAll">⬇ 下載全部 (zip)</button>
+      <button id="nlm-clear" class="nlm-btn ghost" data-i18n="btnClear">清空</button>
       <span id="nlm-status" class="status"></span>
     </div>
 
     <button id="nlm-adv-toggle" class="adv-toggle" type="button">▸ 進階設定 · Advanced</button>
     <div id="nlm-adv" class="adv">
-      <label>右邊界 marginX<input id="cfg-marginX" type="number" value="400" min="40" step="10"></label>
-      <label>下邊界 marginY<input id="cfg-marginY" type="number" value="120" min="20" step="10"></label>
-      <label>暗點門檻 pixel<input id="cfg-pixel" type="number" value="22" min="2" max="120"></label>
-      <label>文字亮度上限 dark<input id="cfg-dark" type="number" value="210" min="80" max="255"></label>
-      <label>偵測放大 upscale<input id="cfg-upscale" type="number" value="3.5" min="1" max="6" step="0.5"></label>
-      <label class="chk"><input id="cfg-patchheal" type="checkbox">貼補重建 patch-heal（材質背景用）</label>
-      <label class="chk"><input id="cfg-template" type="checkbox">文字比對確認 template</label>
+      <label><span data-i18n="advMarginX">右邊界 marginX</span><input id="cfg-marginX" type="number" value="400" min="40" step="10"></label>
+      <label><span data-i18n="advMarginY">下邊界 marginY</span><input id="cfg-marginY" type="number" value="120" min="20" step="10"></label>
+      <label><span data-i18n="advPixel">暗點門檻 pixel</span><input id="cfg-pixel" type="number" value="22" min="2" max="120"></label>
+      <label><span data-i18n="advDark">文字亮度上限 dark</span><input id="cfg-dark" type="number" value="210" min="80" max="255"></label>
+      <label><span data-i18n="advUpscale">偵測放大 upscale</span><input id="cfg-upscale" type="number" value="3.5" min="1" max="6" step="0.5"></label>
+      <label class="chk"><input id="cfg-patchheal" type="checkbox"><span data-i18n="advPatchHeal">貼補重建 patch-heal（材質背景用）</span></label>
+      <label class="chk"><input id="cfg-template" type="checkbox"><span data-i18n="advTemplate">文字比對確認 template</span></label>
     </div>
 
+    <section id="nlm-preview" class="preview" hidden>
+      <div class="preview-head">
+        <span class="preview-title" data-i18n="previewTitle">預覽對比</span>
+        <span id="nlm-preview-name" class="preview-name"></span>
+      </div>
+      <div class="preview-grid">
+        <figure class="preview-pane">
+          <figcaption data-i18n="previewBefore">原圖</figcaption>
+          <div id="nlm-pv-before" class="preview-stage"></div>
+        </figure>
+        <figure class="preview-pane">
+          <figcaption data-i18n="previewAfter">結果</figcaption>
+          <div id="nlm-pv-after" class="preview-stage"></div>
+        </figure>
+      </div>
+    </section>
+
     <ul id="nlm-list" class="list"></ul>
-    <div id="nlm-empty" class="empty">尚未加入任何檔案。把 NotebookLM 匯出的圖片 / PDF / PPTX 拖進來即可。</div>
+    <div id="nlm-empty" class="empty" data-i18n="emptyHint">尚未加入任何檔案。把 NotebookLM 匯出的圖片 / PDF / PPTX 拖進來即可。</div>
   </main>
 
   <footer class="ftr">
-    <p><strong>使用聲明：</strong>本工具僅供處理你<strong>擁有或有權修改</strong>的內容。是否符合各服務的使用條款由使用者自行負責。所有處理皆在你的瀏覽器本機完成，不會連網或上傳。</p>
-    <p class="muted">Reimplemented in offline HTML/Canvas, inspired by the architecture of Albonire/notebooklm-watermark-remover (not a copy).</p>
+    <p data-i18n-html="footerDisclaimer"><strong>使用聲明：</strong>本工具僅供處理你<strong>擁有或有權修改</strong>的內容。是否符合各服務的使用條款由使用者自行負責。所有處理皆在你的瀏覽器本機完成，不會連網或上傳。</p>
+    <p class="muted" data-i18n="footerMuted">Reimplemented in offline HTML/Canvas, inspired by the architecture of Albonire/notebooklm-watermark-remover (not a copy).</p>
   </footer>
 
   <div id="nlm-flash" class="flash"></div>

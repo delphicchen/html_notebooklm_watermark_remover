@@ -23,7 +23,7 @@
   // when present we skip auto-detection and reconstruct that region instead.
   Handler.process = function (file, cfg, manualSpec) {
     return NLM.blobToImageData(file).then(function (img) {
-      var res, found, message = '';
+      var res, found;
       if (Process.specHasShapes(manualSpec)) {
         var mask = Process.maskFromSpec(manualSpec, img.width, img.height);
         res = Process.cleanWithUserMask(img, mask, cfg);
@@ -31,7 +31,6 @@
       } else {
         res = Process.cleanFullImage(img, cfg);
         found = res.found;
-        if (!found) message = '未偵測到浮水印 · no watermark detected';
       }
       var outData = res.found ? res.imageData : img;
       var mime = outMime(file);
@@ -43,7 +42,7 @@
           blob: blob, mime: mime, pageCount: 1,
           previewBefore: NLM.imageDataToCanvas(img),
           previewAfter: NLM.imageDataToCanvas(outData),
-          message: message
+          messageKey: found ? 'imageCleaned' : 'noWatermark'
         };
       });
     });

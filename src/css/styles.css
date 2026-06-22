@@ -26,9 +26,15 @@ body {
 /* header */
 .hdr { color: #eef0ff; }
 .hdr-in {
-  max-width: 980px; margin: 0 auto; padding: 26px 20px 10px;
+  max-width: 1560px; margin: 0 auto; padding: 26px 28px 10px;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
 }
+.hdr-right { display: flex; align-items: center; gap: 10px; }
+.pill.lang {
+  font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  letter-spacing: .3px; transition: .12s;
+}
+.pill.lang:hover { background: rgba(255, 255, 255, 0.20); border-color: rgba(255, 255, 255, 0.34); }
 .brand { display: flex; align-items: center; gap: 14px; }
 .logo {
   width: 46px; height: 46px; flex: none; display: grid; place-items: center;
@@ -46,7 +52,7 @@ body {
 
 /* main panel */
 .wrap {
-  max-width: 980px; margin: 14px auto 40px; padding: 22px;
+  max-width: 1560px; margin: 14px auto 40px; padding: 22px 28px;
   background: var(--panel); border-radius: 20px; box-shadow: var(--shadow);
 }
 
@@ -100,7 +106,10 @@ body {
 .nlm-row {
   display: flex; gap: 14px; align-items: center; padding: 12px;
   border: 1px solid var(--line); border-radius: 12px; background: #fff;
+  cursor: pointer; transition: border-color .12s, box-shadow .12s;
 }
+.nlm-row:hover { border-color: #c7cbe0; }
+.nlm-row.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(109, 94, 252, 0.18); }
 .nlm-thumb { display: flex; gap: 8px; flex: none; }
 .nlm-thumb canvas { border-radius: 8px; border: 1px solid var(--line); display: block; background: #f3f4f8; max-height: 84px; width: auto; }
 .nlm-pv { display: flex; flex-direction: column; align-items: center; gap: 3px; }
@@ -124,8 +133,36 @@ body {
 .nlm-seg.active { background: var(--accent); color: #fff; }
 .nlm-actions { display: flex; flex-direction: column; gap: 6px; flex: none; }
 
+/* large before/after preview panel */
+.preview {
+  margin: 18px 0 0; padding: 16px; border: 1px solid var(--line);
+  border-radius: 14px; background: #fbfbfe;
+}
+.preview-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.preview-title { font-weight: 700; font-size: 14.5px; }
+.preview-name { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.preview-pane { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.preview-pane figcaption {
+  font-size: 12px; font-weight: 700; letter-spacing: .3px; color: var(--muted);
+  text-transform: uppercase;
+}
+.preview-pane:last-child figcaption { color: var(--accent); }
+.preview-stage {
+  display: grid; place-items: center; min-height: 160px; padding: 8px;
+  background:
+    linear-gradient(45deg, #eceef6 25%, transparent 25%) -8px 0 / 16px 16px,
+    linear-gradient(-45deg, #eceef6 25%, transparent 25%) -8px 0 / 16px 16px,
+    linear-gradient(45deg, transparent 75%, #eceef6 75%) -8px 0 / 16px 16px,
+    linear-gradient(-45deg, transparent 75%, #eceef6 75%) -8px 0 / 16px 16px,
+    #f6f7fb;
+  border: 1px solid var(--line); border-radius: 10px;
+}
+.preview-stage canvas { display: block; max-width: 100%; height: auto; border-radius: 6px; }
+.preview-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 20px 0; }
+
 /* footer */
-.ftr { max-width: 980px; margin: 0 auto 40px; padding: 0 22px; color: #aab0d6; font-size: 12.5px; line-height: 1.6; }
+.ftr { max-width: 1560px; margin: 0 auto 40px; padding: 0 28px; color: #aab0d6; font-size: 12.5px; line-height: 1.6; }
 .ftr strong { color: #d8dcff; }
 .ftr .muted { color: #7c829f; margin-top: 6px; }
 
@@ -158,6 +195,9 @@ body {
 .nlm-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
 .nlm-modal-actions .nlm-tool.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
 
+@media (max-width: 880px) {
+  .preview-grid { grid-template-columns: 1fr; }
+}
 @media (max-width: 640px) {
   .nlm-row { flex-wrap: wrap; }
   .nlm-actions { flex-direction: row; width: 100%; }

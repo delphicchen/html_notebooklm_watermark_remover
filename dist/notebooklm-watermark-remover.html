@@ -32,9 +32,15 @@ body {
 /* header */
 .hdr { color: #eef0ff; }
 .hdr-in {
-  max-width: 980px; margin: 0 auto; padding: 26px 20px 10px;
+  max-width: 1560px; margin: 0 auto; padding: 26px 28px 10px;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
 }
+.hdr-right { display: flex; align-items: center; gap: 10px; }
+.pill.lang {
+  font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  letter-spacing: .3px; transition: .12s;
+}
+.pill.lang:hover { background: rgba(255, 255, 255, 0.20); border-color: rgba(255, 255, 255, 0.34); }
 .brand { display: flex; align-items: center; gap: 14px; }
 .logo {
   width: 46px; height: 46px; flex: none; display: grid; place-items: center;
@@ -52,7 +58,7 @@ body {
 
 /* main panel */
 .wrap {
-  max-width: 980px; margin: 14px auto 40px; padding: 22px;
+  max-width: 1560px; margin: 14px auto 40px; padding: 22px 28px;
   background: var(--panel); border-radius: 20px; box-shadow: var(--shadow);
 }
 
@@ -106,7 +112,10 @@ body {
 .nlm-row {
   display: flex; gap: 14px; align-items: center; padding: 12px;
   border: 1px solid var(--line); border-radius: 12px; background: #fff;
+  cursor: pointer; transition: border-color .12s, box-shadow .12s;
 }
+.nlm-row:hover { border-color: #c7cbe0; }
+.nlm-row.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(109, 94, 252, 0.18); }
 .nlm-thumb { display: flex; gap: 8px; flex: none; }
 .nlm-thumb canvas { border-radius: 8px; border: 1px solid var(--line); display: block; background: #f3f4f8; max-height: 84px; width: auto; }
 .nlm-pv { display: flex; flex-direction: column; align-items: center; gap: 3px; }
@@ -130,8 +139,36 @@ body {
 .nlm-seg.active { background: var(--accent); color: #fff; }
 .nlm-actions { display: flex; flex-direction: column; gap: 6px; flex: none; }
 
+/* large before/after preview panel */
+.preview {
+  margin: 18px 0 0; padding: 16px; border: 1px solid var(--line);
+  border-radius: 14px; background: #fbfbfe;
+}
+.preview-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.preview-title { font-weight: 700; font-size: 14.5px; }
+.preview-name { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.preview-pane { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.preview-pane figcaption {
+  font-size: 12px; font-weight: 700; letter-spacing: .3px; color: var(--muted);
+  text-transform: uppercase;
+}
+.preview-pane:last-child figcaption { color: var(--accent); }
+.preview-stage {
+  display: grid; place-items: center; min-height: 160px; padding: 8px;
+  background:
+    linear-gradient(45deg, #eceef6 25%, transparent 25%) -8px 0 / 16px 16px,
+    linear-gradient(-45deg, #eceef6 25%, transparent 25%) -8px 0 / 16px 16px,
+    linear-gradient(45deg, transparent 75%, #eceef6 75%) -8px 0 / 16px 16px,
+    linear-gradient(-45deg, transparent 75%, #eceef6 75%) -8px 0 / 16px 16px,
+    #f6f7fb;
+  border: 1px solid var(--line); border-radius: 10px;
+}
+.preview-stage canvas { display: block; max-width: 100%; height: auto; border-radius: 6px; }
+.preview-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 20px 0; }
+
 /* footer */
-.ftr { max-width: 980px; margin: 0 auto 40px; padding: 0 22px; color: #aab0d6; font-size: 12.5px; line-height: 1.6; }
+.ftr { max-width: 1560px; margin: 0 auto 40px; padding: 0 28px; color: #aab0d6; font-size: 12.5px; line-height: 1.6; }
 .ftr strong { color: #d8dcff; }
 .ftr .muted { color: #7c829f; margin-top: 6px; }
 
@@ -164,6 +201,9 @@ body {
 .nlm-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
 .nlm-modal-actions .nlm-tool.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
 
+@media (max-width: 880px) {
+  .preview-grid { grid-template-columns: 1fr; }
+}
 @media (max-width: 640px) {
   .nlm-row { flex-wrap: wrap; }
   .nlm-actions { flex-direction: row; width: 100%; }
@@ -176,50 +216,70 @@ body {
       <div class="brand">
         <span class="logo">✦</span>
         <div>
-          <h1>NotebookLM 浮水印移除工具</h1>
-          <p>離線執行 · 不上傳任何檔案 · Offline watermark remover</p>
+          <h1 data-i18n="appTitle">NotebookLM 浮水印移除工具</h1>
+          <p data-i18n="appSubtitle">離線執行 · 不上傳任何檔案 · 完全在本機處理</p>
         </div>
       </div>
-      <span class="pill">100% 本機處理</span>
+      <div class="hdr-right">
+        <button id="nlm-lang" class="pill lang" type="button" title="中文 / English" data-i18n="langToggle">EN</button>
+        <span class="pill" data-i18n="pill">100% 本機處理</span>
+      </div>
     </div>
   </header>
 
   <main class="wrap">
-    <section id="nlm-drop" class="drop" tabindex="0" role="button" aria-label="選擇檔案">
+    <section id="nlm-drop" class="drop" tabindex="0" role="button" aria-label="file picker">
       <div class="drop-inner">
         <div class="drop-icon">⬇</div>
-        <div class="drop-title">拖放檔案到這裡，或點此選擇</div>
-        <div class="drop-sub">支援 PNG · JPG · JPEG · WEBP · PDF · PPTX</div>
+        <div class="drop-title" data-i18n="dropTitle">拖放檔案到這裡，或點此選擇</div>
+        <div class="drop-sub" data-i18n="dropSub">支援 PNG · JPG · JPEG · WEBP · PDF · PPTX</div>
       </div>
       <input type="file" id="nlm-input" multiple
              accept=".png,.jpg,.jpeg,.webp,.pdf,.pptx" hidden>
     </section>
 
     <div class="toolbar">
-      <button id="nlm-process" class="nlm-btn primary">▶ 處理全部</button>
-      <button id="nlm-download" class="nlm-btn">⬇ 下載全部 (zip)</button>
-      <button id="nlm-clear" class="nlm-btn ghost">清空</button>
+      <button id="nlm-process" class="nlm-btn primary" data-i18n="btnProcessAll">▶ 處理全部</button>
+      <button id="nlm-download" class="nlm-btn" data-i18n="btnDownloadAll">⬇ 下載全部 (zip)</button>
+      <button id="nlm-clear" class="nlm-btn ghost" data-i18n="btnClear">清空</button>
       <span id="nlm-status" class="status"></span>
     </div>
 
     <button id="nlm-adv-toggle" class="adv-toggle" type="button">▸ 進階設定 · Advanced</button>
     <div id="nlm-adv" class="adv">
-      <label>右邊界 marginX<input id="cfg-marginX" type="number" value="400" min="40" step="10"></label>
-      <label>下邊界 marginY<input id="cfg-marginY" type="number" value="120" min="20" step="10"></label>
-      <label>暗點門檻 pixel<input id="cfg-pixel" type="number" value="22" min="2" max="120"></label>
-      <label>文字亮度上限 dark<input id="cfg-dark" type="number" value="210" min="80" max="255"></label>
-      <label>偵測放大 upscale<input id="cfg-upscale" type="number" value="3.5" min="1" max="6" step="0.5"></label>
-      <label class="chk"><input id="cfg-patchheal" type="checkbox">貼補重建 patch-heal（材質背景用）</label>
-      <label class="chk"><input id="cfg-template" type="checkbox">文字比對確認 template</label>
+      <label><span data-i18n="advMarginX">右邊界 marginX</span><input id="cfg-marginX" type="number" value="400" min="40" step="10"></label>
+      <label><span data-i18n="advMarginY">下邊界 marginY</span><input id="cfg-marginY" type="number" value="120" min="20" step="10"></label>
+      <label><span data-i18n="advPixel">暗點門檻 pixel</span><input id="cfg-pixel" type="number" value="22" min="2" max="120"></label>
+      <label><span data-i18n="advDark">文字亮度上限 dark</span><input id="cfg-dark" type="number" value="210" min="80" max="255"></label>
+      <label><span data-i18n="advUpscale">偵測放大 upscale</span><input id="cfg-upscale" type="number" value="3.5" min="1" max="6" step="0.5"></label>
+      <label class="chk"><input id="cfg-patchheal" type="checkbox"><span data-i18n="advPatchHeal">貼補重建 patch-heal（材質背景用）</span></label>
+      <label class="chk"><input id="cfg-template" type="checkbox"><span data-i18n="advTemplate">文字比對確認 template</span></label>
     </div>
 
+    <section id="nlm-preview" class="preview" hidden>
+      <div class="preview-head">
+        <span class="preview-title" data-i18n="previewTitle">預覽對比</span>
+        <span id="nlm-preview-name" class="preview-name"></span>
+      </div>
+      <div class="preview-grid">
+        <figure class="preview-pane">
+          <figcaption data-i18n="previewBefore">原圖</figcaption>
+          <div id="nlm-pv-before" class="preview-stage"></div>
+        </figure>
+        <figure class="preview-pane">
+          <figcaption data-i18n="previewAfter">結果</figcaption>
+          <div id="nlm-pv-after" class="preview-stage"></div>
+        </figure>
+      </div>
+    </section>
+
     <ul id="nlm-list" class="list"></ul>
-    <div id="nlm-empty" class="empty">尚未加入任何檔案。把 NotebookLM 匯出的圖片 / PDF / PPTX 拖進來即可。</div>
+    <div id="nlm-empty" class="empty" data-i18n="emptyHint">尚未加入任何檔案。把 NotebookLM 匯出的圖片 / PDF / PPTX 拖進來即可。</div>
   </main>
 
   <footer class="ftr">
-    <p><strong>使用聲明：</strong>本工具僅供處理你<strong>擁有或有權修改</strong>的內容。是否符合各服務的使用條款由使用者自行負責。所有處理皆在你的瀏覽器本機完成，不會連網或上傳。</p>
-    <p class="muted">Reimplemented in offline HTML/Canvas, inspired by the architecture of Albonire/notebooklm-watermark-remover (not a copy).</p>
+    <p data-i18n-html="footerDisclaimer"><strong>使用聲明：</strong>本工具僅供處理你<strong>擁有或有權修改</strong>的內容。是否符合各服務的使用條款由使用者自行負責。所有處理皆在你的瀏覽器本機完成，不會連網或上傳。</p>
+    <p class="muted" data-i18n="footerMuted">Reimplemented in offline HTML/Canvas, inspired by the architecture of Albonire/notebooklm-watermark-remover (not a copy).</p>
   </footer>
 
   <div id="nlm-flash" class="flash"></div>
@@ -487,6 +547,167 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     if (n < 1024) return n + ' B';
     if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
     return (n / 1048576).toFixed(2) + ' MB';
+  };
+})();
+
+/* === i18n.js === */
+/* i18n.js — tiny bilingual (zh-Hant / en) string table + live language switch.
+ *
+ * Static markup carries `data-i18n="key"` (textContent) or `data-i18n-html="key"`
+ * (innerHTML, for the disclaimer markup). Dynamic modules call `NLM.t(key, params)`
+ * at render time and re-render on the `lang` bus event. No network, no frameworks.
+ *
+ *   NLM.t('btnProcess')            -> current-language string
+ *   NLM.t('pdfCleaned',{n:2,t:3})  -> "2/3 頁已清除" | "2/3 pages cleaned"
+ *   NLM.i18n.set('en')             -> switch language, re-apply, emit 'lang'
+ */
+(function () {
+  'use strict';
+  var NLM = window.NLM;
+
+  var DICT = {
+    zh: {
+      docTitle: 'NotebookLM 浮水印移除工具 · 離線版',
+      appTitle: 'NotebookLM 浮水印移除工具',
+      appSubtitle: '離線執行 · 不上傳任何檔案 · 完全在本機處理',
+      pill: '100% 本機處理',
+      langToggle: 'EN',
+
+      dropTitle: '拖放檔案到這裡，或點此選擇',
+      dropSub: '支援 PNG · JPG · JPEG · WEBP · PDF · PPTX',
+
+      btnProcessAll: '▶ 處理全部',
+      btnDownloadAll: '⬇ 下載全部 (zip)',
+      btnClear: '清空',
+
+      advToggle: '進階設定 · Advanced',
+      advMarginX: '右邊界 marginX',
+      advMarginY: '下邊界 marginY',
+      advPixel: '暗點門檻 pixel',
+      advDark: '文字亮度上限 dark',
+      advUpscale: '偵測放大 upscale',
+      advPatchHeal: '貼補重建 patch-heal（材質背景用）',
+      advTemplate: '文字比對確認 template',
+
+      emptyHint: '尚未加入任何檔案。把 NotebookLM 匯出的圖片 / PDF / PPTX 拖進來即可。',
+      previewTitle: '預覽對比',
+      previewBefore: '原圖',
+      previewAfter: '結果',
+      previewEmpty: '處理檔案後，點選下方項目即可在此並列檢視大圖對比。',
+
+      footerDisclaimer: '<strong>使用聲明：</strong>本工具僅供處理你<strong>擁有或有權修改</strong>的內容。是否符合各服務的使用條款由使用者自行負責。所有處理皆在你的瀏覽器本機完成，不會連網或上傳。',
+      footerMuted: '以離線 HTML/Canvas 重新實作，架構參考自 Albonire/notebooklm-watermark-remover（非照抄）。',
+
+      badgeImage: '圖片', badgePdf: 'PDF', badgePptx: 'PPTX',
+      modeAuto: '自動偵測', modeManual: '✋ 手動框選',
+      btnProcess: '處理', btnDownload: '下載', btnRemove: '移除',
+
+      stPending: '待處理', stLoading: '載入中…', stProcessing: '處理中', stError: '處理失敗',
+      doneDefault: '完成',
+      noWatermark: '未偵測到浮水印',
+      imageCleaned: '已清除浮水印',
+      pptxCleaned: '{n}/{t} 張圖片已清除',
+      pdfCleaned: '{n}/{t} 頁已清除',
+
+      toolbarCount: '{n} 個檔案 · {d} 已清除',
+      flashUnsupported: '不支援的格式: {name}',
+      flashZipping: '打包中…',
+      flashDownloaded: '已下載 {n} 個檔案',
+
+      mTitle: '手動框選浮水印',
+      mHint: '用「矩形」拖曳框住浮水印，或用「筆刷」塗抹。框越貼合，背景重建越乾淨。',
+      mRect: '▭ 矩形', mBrush: '🖌 筆刷', mUndo: '↶ 復原', mClear: '✕ 清除',
+      mBrushSize: '筆刷大小', mApply: '套用並重建', mCancel: '取消'
+    },
+    en: {
+      docTitle: 'NotebookLM Watermark Remover · Offline',
+      appTitle: 'NotebookLM Watermark Remover',
+      appSubtitle: 'Runs offline · nothing is uploaded · 100% on your device',
+      pill: '100% on-device',
+      langToggle: '中文',
+
+      dropTitle: 'Drop files here, or click to choose',
+      dropSub: 'Supports PNG · JPG · JPEG · WEBP · PDF · PPTX',
+
+      btnProcessAll: '▶ Process all',
+      btnDownloadAll: '⬇ Download all (zip)',
+      btnClear: 'Clear',
+
+      advToggle: 'Advanced settings',
+      advMarginX: 'Right margin (marginX)',
+      advMarginY: 'Bottom margin (marginY)',
+      advPixel: 'Dark threshold (pixel)',
+      advDark: 'Text brightness max (dark)',
+      advUpscale: 'Detection upscale',
+      advPatchHeal: 'Patch-heal (textured backgrounds)',
+      advTemplate: 'Text-template confirm',
+
+      emptyHint: 'No files yet. Drop NotebookLM-exported images / PDF / PPTX here.',
+      previewTitle: 'Before / After',
+      previewBefore: 'Before',
+      previewAfter: 'After',
+      previewEmpty: 'Process a file, then select it below to compare before / after side by side here.',
+
+      footerDisclaimer: '<strong>Disclaimer:</strong> Use this tool only on content you <strong>own or have the right to modify</strong>. Compliance with each service’s terms is your responsibility. All processing happens locally in your browser — nothing is uploaded.',
+      footerMuted: 'Reimplemented in offline HTML/Canvas, inspired by the architecture of Albonire/notebooklm-watermark-remover (not a copy).',
+
+      badgeImage: 'Image', badgePdf: 'PDF', badgePptx: 'PPTX',
+      modeAuto: 'Auto', modeManual: '✋ Manual',
+      btnProcess: 'Process', btnDownload: 'Download', btnRemove: 'Remove',
+
+      stPending: 'Pending', stLoading: 'Loading…', stProcessing: 'Processing', stError: 'Failed',
+      doneDefault: 'Done',
+      noWatermark: 'No watermark detected',
+      imageCleaned: 'Watermark removed',
+      pptxCleaned: '{n}/{t} images cleaned',
+      pdfCleaned: '{n}/{t} pages cleaned',
+
+      toolbarCount: '{n} files · {d} cleaned',
+      flashUnsupported: 'Unsupported format: {name}',
+      flashZipping: 'Zipping…',
+      flashDownloaded: 'Downloaded {n} files',
+
+      mTitle: 'Manual mask',
+      mHint: 'Drag a rectangle over the watermark, or paint it with the brush. Tighter marks reconstruct cleaner.',
+      mRect: '▭ Rectangle', mBrush: '🖌 Brush', mUndo: '↶ Undo', mClear: '✕ Clear',
+      mBrushSize: 'Brush size', mApply: 'Apply & rebuild', mCancel: 'Cancel'
+    }
+  };
+
+  function format(str, params) {
+    if (!params) return str;
+    return str.replace(/\{(\w+)\}/g, function (m, k) {
+      return params[k] != null ? params[k] : m;
+    });
+  }
+
+  var i18n = (NLM.i18n = {
+    lang: 'zh',
+    set: function (lang) {
+      if (lang !== 'zh' && lang !== 'en') return;
+      if (lang === i18n.lang) return;
+      i18n.lang = lang;
+      i18n.apply();
+      NLM.bus.emit('lang', lang);
+    },
+    toggle: function () { i18n.set(i18n.lang === 'zh' ? 'en' : 'zh'); },
+    // Apply to all static [data-i18n] / [data-i18n-html] markup + <title> + <html lang>.
+    apply: function () {
+      document.documentElement.lang = i18n.lang === 'zh' ? 'zh-Hant' : 'en';
+      document.title = NLM.t('docTitle');
+      var nodes = document.querySelectorAll('[data-i18n]');
+      for (var i = 0; i < nodes.length; i++) nodes[i].textContent = NLM.t(nodes[i].getAttribute('data-i18n'));
+      var html = document.querySelectorAll('[data-i18n-html]');
+      for (var j = 0; j < html.length; j++) html[j].innerHTML = NLM.t(html[j].getAttribute('data-i18n-html'));
+    }
+  });
+
+  NLM.t = function (key, params) {
+    var table = DICT[i18n.lang] || DICT.zh;
+    var s = table[key];
+    if (s == null) s = DICT.zh[key];
+    if (s == null) s = key;
+    return format(s, params);
   };
 })();
 
@@ -1165,7 +1386,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   // when present we skip auto-detection and reconstruct that region instead.
   Handler.process = function (file, cfg, manualSpec) {
     return NLM.blobToImageData(file).then(function (img) {
-      var res, found, message = '';
+      var res, found;
       if (Process.specHasShapes(manualSpec)) {
         var mask = Process.maskFromSpec(manualSpec, img.width, img.height);
         res = Process.cleanWithUserMask(img, mask, cfg);
@@ -1173,7 +1394,6 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       } else {
         res = Process.cleanFullImage(img, cfg);
         found = res.found;
-        if (!found) message = '未偵測到浮水印 · no watermark detected';
       }
       var outData = res.found ? res.imageData : img;
       var mime = outMime(file);
@@ -1185,7 +1405,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
           blob: blob, mime: mime, pageCount: 1,
           previewBefore: NLM.imageDataToCanvas(img),
           previewAfter: NLM.imageDataToCanvas(outData),
-          message: message
+          messageKey: found ? 'imageCleaned' : 'noWatermark'
         };
       });
     });
@@ -1289,9 +1509,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
               name: NLM.withSuffix(file.name, '_cleaned'),
               blob: blob, mime: PPTX_MIME, pageCount: names.length,
               previewBefore: preview.before, previewAfter: preview.after,
-              message: patched > 0
-                ? (patched + '/' + names.length + ' 張圖片已清除')
-                : '未偵測到浮水印 · no watermark detected'
+              messageKey: patched > 0 ? 'pptxCleaned' : 'noWatermark',
+              messageParams: patched > 0 ? { n: patched, t: names.length } : null
             };
           });
       });
@@ -1464,21 +1683,21 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
       return chain.then(function () {
         if (!manual && patched === 0) {
-          return result(new Blob([origBytes], { type: 'application/pdf' }), false,
-            '未偵測到浮水印 · no watermark detected');
+          return result(new Blob([origBytes], { type: 'application/pdf' }), false, 'noWatermark', null);
         }
         return libDoc.save().then(function (out) {
           return result(new Blob([out], { type: 'application/pdf' }), patched > 0,
-            patched + '/' + pageCount + ' 頁已清除 · pages cleaned');
+            'pdfCleaned', { n: patched, t: pageCount });
         });
       });
 
-      function result(blob, found, message) {
+      function result(blob, found, messageKey, messageParams) {
         return {
           ok: true, found: found, kind: 'pdf',
           name: NLM.withSuffix(file.name, '_cleaned'),
           blob: blob, mime: 'application/pdf', pageCount: pageCount,
-          previewBefore: preview.before, previewAfter: preview.after, message: message
+          previewBefore: preview.before, previewAfter: preview.after,
+          messageKey: messageKey, messageParams: messageParams
         };
       }
     });
@@ -1517,17 +1736,16 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       var box = el('div', 'nlm-modal-box');
       overlay.appendChild(box);
 
-      box.appendChild(el('div', 'nlm-modal-title', '手動框選浮水印 · Manual mask — ' + (rep.label || '')));
-      var hint = el('div', 'nlm-modal-hint',
-        '用「矩形」拖曳框住浮水印，或用「筆刷」塗抹。框越貼合，背景重建越乾淨。');
+      box.appendChild(el('div', 'nlm-modal-title', NLM.t('mTitle') + (rep.label ? ' — ' + rep.label : '')));
+      var hint = el('div', 'nlm-modal-hint', NLM.t('mHint'));
       box.appendChild(hint);
 
       // toolbar
       var bar = el('div', 'nlm-tools');
-      var bRect = btn('▭ 矩形', true), bBrush = btn('🖌 筆刷', false);
-      var bUndo = btn('↶ 復原', false), bClear = btn('✕ 清除', false);
+      var bRect = btn(NLM.t('mRect'), true), bBrush = btn(NLM.t('mBrush'), false);
+      var bUndo = btn(NLM.t('mUndo'), false), bClear = btn(NLM.t('mClear'), false);
       var brushWrap = el('label', 'nlm-brush');
-      brushWrap.appendChild(document.createTextNode('筆刷大小'));
+      brushWrap.appendChild(document.createTextNode(NLM.t('mBrushSize')));
       var brushRange = document.createElement('input');
       brushRange.type = 'range'; brushRange.min = '1'; brushRange.max = '12'; brushRange.value = '3';
       brushWrap.appendChild(brushRange);
@@ -1546,8 +1764,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
       // actions
       var actions = el('div', 'nlm-modal-actions');
-      var bApply = btn('套用並重建 · Apply', false); bApply.classList.add('primary');
-      var bCancel = btn('取消 · Cancel', false);
+      var bApply = btn(NLM.t('mApply'), false); bApply.classList.add('primary');
+      var bCancel = btn(NLM.t('mCancel'), false);
       actions.appendChild(bCancel); actions.appendChild(bApply);
       box.appendChild(actions);
 
@@ -1638,11 +1856,13 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 })();
 
 /* === ui.js === */
-/* ui.js — drag & drop batch UI, previews, manual toggle, downloads.
+/* ui.js — drag & drop batch UI, large side-by-side preview, manual toggle, downloads.
  *
  * Wires the static markup in index.template.html. Keeps a small queue of files,
- * routes each to its handler (image / pptx / pdf), shows before/after previews,
- * and lets the user download individually or as a zip.
+ * routes each to its handler (image / pptx / pdf), shows a large before/after
+ * comparison for the selected item, and lets the user download individually or
+ * as a zip. All user-facing strings go through NLM.t() and re-render on the
+ * `lang` bus event (中文 / English toggle).
  */
 (function () {
   'use strict';
@@ -1655,11 +1875,14 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     pdf: function () { return NLM.PdfHandler; },
     pptx: function () { return NLM.PptxHandler; }
   };
-  var BADGE = { image: '圖片', pdf: 'PDF', pptx: 'PPTX' };
+  var BADGE_KEY = { image: 'badgeImage', pdf: 'badgePdf', pptx: 'badgePptx' };
+  function badge(kind) { return NLM.t(BADGE_KEY[kind]); }
 
   var queue = [];
   var seq = 0;
+  var selectedId = null;
   var $ = function (id) { return document.getElementById(id); };
+  function find(id) { for (var i = 0; i < queue.length; i++) if (queue[i].id === id) return queue[i]; return null; }
 
   function h(tag, attrs, kids) {
     var n = document.createElement(tag);
@@ -1673,6 +1896,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     (kids || []).forEach(function (c) { if (c) n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
     return n;
   }
+  function stop(fn) { return function (e) { if (e && e.stopPropagation) e.stopPropagation(); return fn(e); }; }
 
   function thumb(canvas, maxW) {
     if (!canvas) return null;
@@ -1699,17 +1923,21 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     Array.prototype.forEach.call(files, function (file) {
       var ext = NLM.extOf(file.name);
       var kind = SUPPORTED[ext];
-      if (!kind) { flash('不支援的格式: ' + file.name); return; }
+      if (!kind) { flash(NLM.t('flashUnsupported', { name: file.name })); return; }
       queue.push({ id: ++seq, file: file, kind: kind, mode: 'auto', manualSpec: null, status: 'pending', result: null });
     });
     render();
   }
 
-  function removeItem(id) { queue = queue.filter(function (it) { return it.id !== id; }); render(); }
+  function removeItem(id) {
+    queue = queue.filter(function (it) { return it.id !== id; });
+    if (selectedId === id) selectedId = null;
+    render(); renderPreview();
+  }
 
   function runItem(it) {
     if (it.status === 'processing') return Promise.resolve();
-    it.status = 'processing'; it.progress = null; render();
+    it.status = 'processing'; it.progress = null; renderRow(it);
     var cfg = readConfig();
     var handler = HANDLERS[it.kind]();
     return handler.process(it.file, cfg, it.manualSpec, function (cur, total) {
@@ -1718,7 +1946,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       it.result = res; it.status = res.found ? 'done' : 'empty';
     }).catch(function (err) {
       console.error(err); it.status = 'error'; it.error = (err && err.message) || String(err);
-    }).then(function () { renderRow(it); updateToolbar(); });
+    }).then(function () {
+      if (it.result && it.result.previewBefore) selectItem(it.id);
+      else { renderRow(it); updateToolbar(); }
+    });
   }
 
   function processAll() {
@@ -1751,10 +1982,40 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     if (done.length === 1) return downloadOne(done[0]);
     var zip = new JSZip();
     done.forEach(function (it) { zip.file(it.result.name, it.result.blob); });
-    flash('打包中…');
+    flash(NLM.t('flashZipping'));
     zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }).then(function (blob) {
-      NLM.downloadBlob(blob, 'notebooklm_cleaned.zip'); flash('已下載 ' + done.length + ' 個檔案');
+      NLM.downloadBlob(blob, 'notebooklm_cleaned.zip'); flash(NLM.t('flashDownloaded', { n: done.length }));
     });
+  }
+
+  /* --------------------------- selection / big preview --------------------------- */
+  function selectItem(id) { selectedId = id; render(); renderPreview(); }
+
+  function fillStage(stage, srcCanvas) {
+    stage.innerHTML = '';
+    if (!srcCanvas) return;
+    var boxW = Math.max(140, stage.clientWidth - 16);
+    var boxH = Math.min(Math.round(window.innerHeight * 0.7), 700);
+    var scale = Math.min(boxW / srcCanvas.width, boxH / srcCanvas.height);
+    scale = Math.min(scale, 2.5);
+    if (!(scale > 0)) scale = 1;
+    var w = Math.max(1, Math.round(srcCanvas.width * scale));
+    var hh = Math.max(1, Math.round(srcCanvas.height * scale));
+    var c = NLM.canvas(w, hh);
+    var ctx = NLM.ctxOf(c); ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(srcCanvas, 0, 0, w, hh);
+    stage.appendChild(c);
+  }
+
+  function renderPreview() {
+    var panel = $('nlm-preview');
+    var it = selectedId != null ? find(selectedId) : null;
+    var has = it && it.result && it.result.previewBefore;
+    if (!has) { panel.hidden = true; return; }
+    panel.hidden = false;
+    $('nlm-preview-name').textContent = it.file.name;
+    fillStage($('nlm-pv-before'), it.result.previewBefore);
+    fillStage($('nlm-pv-after'), it.result.previewAfter);
   }
 
   /* ----------------------------- render ----------------------------- */
@@ -1770,16 +2031,22 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     var old = document.querySelector('.nlm-row[data-id="' + it.id + '"]');
     if (old) old.parentNode.replaceChild(buildRow(it), old);
     else render();
+    updateToolbar();
+  }
+
+  function msgOf(it) {
+    if (it.result && it.result.messageKey) return NLM.t(it.result.messageKey, it.result.messageParams);
+    return NLM.t('doneDefault');
   }
 
   function statusText(it) {
     switch (it.status) {
-      case 'pending': return '待處理';
-      case 'loading': return '載入中…';
-      case 'processing': return '處理中' + (it.progress ? ' · ' + it.progress : '…');
-      case 'done': return '✅ ' + (it.result ? it.result.message : '完成');
-      case 'empty': return '⚠️ ' + (it.result ? it.result.message : '未偵測到浮水印');
-      case 'error': return '❌ ' + (it.error || '處理失敗');
+      case 'pending': return NLM.t('stPending');
+      case 'loading': return NLM.t('stLoading');
+      case 'processing': return NLM.t('stProcessing') + (it.progress ? ' · ' + it.progress : '…');
+      case 'done': return '✅ ' + msgOf(it);
+      case 'empty': return '⚠️ ' + msgOf(it);
+      case 'error': return '❌ ' + (it.error || NLM.t('stError'));
       default: return '';
     }
   }
@@ -1788,34 +2055,34 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     var previews = [];
     if (it.result && it.result.previewBefore) {
       previews.push(h('div', { class: 'nlm-pv' }, [
-        h('span', { class: 'nlm-pv-label', text: '原圖' }), thumb(it.result.previewBefore, 150)
+        h('span', { class: 'nlm-pv-label', text: NLM.t('previewBefore') }), thumb(it.result.previewBefore, 150)
       ]));
       previews.push(h('div', { class: 'nlm-pv' }, [
-        h('span', { class: 'nlm-pv-label', text: '結果' }), thumb(it.result.previewAfter, 150)
+        h('span', { class: 'nlm-pv-label', text: NLM.t('previewAfter') }), thumb(it.result.previewAfter, 150)
       ]));
     } else {
-      previews.push(h('div', { class: 'nlm-thumb-ph', text: BADGE[it.kind] }));
+      previews.push(h('div', { class: 'nlm-thumb-ph', text: badge(it.kind) }));
     }
 
     var modeBtns = h('div', { class: 'nlm-mode' }, [
-      h('button', { class: 'nlm-seg' + (it.mode === 'auto' ? ' active' : ''), text: '自動偵測', onclick: function () { setAuto(it); } }),
-      h('button', { class: 'nlm-seg' + (it.mode === 'manual' ? ' active' : ''), text: '✋ 手動框選', onclick: function () { openManual(it); } })
+      h('button', { class: 'nlm-seg' + (it.mode === 'auto' ? ' active' : ''), text: NLM.t('modeAuto'), onclick: stop(function () { setAuto(it); }) }),
+      h('button', { class: 'nlm-seg' + (it.mode === 'manual' ? ' active' : ''), text: NLM.t('modeManual'), onclick: stop(function () { openManual(it); }) })
     ]);
 
-    var dlBtn = h('button', { class: 'nlm-btn small', text: '下載', onclick: function () { downloadOne(it); } });
+    var dlBtn = h('button', { class: 'nlm-btn small', text: NLM.t('btnDownload'), onclick: stop(function () { downloadOne(it); }) });
     dlBtn.disabled = !(it.result && it.result.blob);
 
-    return h('li', { class: 'nlm-row', data: { id: it.id } }, [
+    return h('li', { class: 'nlm-row' + (it.id === selectedId ? ' selected' : ''), data: { id: it.id }, onclick: function () { selectItem(it.id); } }, [
       h('div', { class: 'nlm-thumb' }, previews),
       h('div', { class: 'nlm-meta' }, [
-        h('div', { class: 'nlm-name' }, [it.file.name, h('span', { class: 'nlm-badge ' + it.kind, text: BADGE[it.kind] })]),
+        h('div', { class: 'nlm-name' }, [it.file.name, h('span', { class: 'nlm-badge ' + it.kind, text: badge(it.kind) })]),
         h('div', { class: 'nlm-sub ' + it.status, text: statusText(it) }),
         modeBtns
       ]),
       h('div', { class: 'nlm-actions' }, [
-        h('button', { class: 'nlm-btn small primary', text: '處理', onclick: function () { runItem(it); } }),
+        h('button', { class: 'nlm-btn small primary', text: NLM.t('btnProcess'), onclick: stop(function () { runItem(it); }) }),
         dlBtn,
-        h('button', { class: 'nlm-btn small ghost', text: '移除', onclick: function () { removeItem(it.id); } })
+        h('button', { class: 'nlm-btn small ghost', text: NLM.t('btnRemove'), onclick: stop(function () { removeItem(it.id); }) })
       ])
     ]);
   }
@@ -1826,7 +2093,12 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     $('nlm-download').disabled = !anyDone;
     $('nlm-clear').disabled = !queue.length;
     var n = queue.length, d = queue.filter(function (it) { return it.status === 'done'; }).length;
-    $('nlm-status').textContent = n ? (n + ' 個檔案 · ' + d + ' 已清除') : '';
+    $('nlm-status').textContent = n ? NLM.t('toolbarCount', { n: n, d: d }) : '';
+  }
+
+  function syncAdvToggle() {
+    var adv = $('nlm-adv'), advToggle = $('nlm-adv-toggle');
+    advToggle.textContent = (adv.classList.contains('open') ? '▾ ' : '▸ ') + NLM.t('advToggle');
   }
 
   var flashTimer;
@@ -1837,6 +2109,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
   /* ------------------------------ init ------------------------------ */
   UI.init = function () {
+    NLM.i18n.apply();
+
     var drop = $('nlm-drop'), input = $('nlm-input');
     drop.addEventListener('click', function () { input.click(); });
     input.addEventListener('change', function () { addFiles(input.files); input.value = ''; });
@@ -1853,13 +2127,21 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
     $('nlm-process').addEventListener('click', processAll);
     $('nlm-download').addEventListener('click', downloadAll);
-    $('nlm-clear').addEventListener('click', function () { queue = []; render(); });
+    $('nlm-clear').addEventListener('click', function () { queue = []; selectedId = null; render(); renderPreview(); });
+
+    $('nlm-lang').addEventListener('click', function () { NLM.i18n.toggle(); });
 
     var advToggle = $('nlm-adv-toggle'), adv = $('nlm-adv');
-    advToggle.addEventListener('click', function () {
-      var open = adv.classList.toggle('open');
-      advToggle.textContent = (open ? '▾ ' : '▸ ') + '進階設定 · Advanced';
-    });
+    advToggle.addEventListener('click', function () { adv.classList.toggle('open'); syncAdvToggle(); });
+    syncAdvToggle();
+
+    // re-render everything that holds translated strings when the language flips
+    NLM.bus.on('lang', function () { render(); syncAdvToggle(); renderPreview(); });
+
+    // keep the big preview readable when the window is resized
+    var rt;
+    window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(renderPreview, 150); });
+
     render();
   };
 })();

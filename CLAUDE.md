@@ -27,7 +27,8 @@ and embeds `pdf.worker.min.js` as base64 (turned into a Blob URL at runtime by `
 
 ## Source layout (`src/js`, load order matters)
 
-`core.js` (namespace, bus, config, canvas/image/download helpers) → `engine.js`
+`core.js` (namespace, bus, config, canvas/image/download helpers) → `i18n.js`
+(zh/en string table, `NLM.t(key,params)`, `NLM.i18n.set/apply`) → `engine.js`
 (gray, box blur, morphology, connected components, **fillHoles**, neighbour-inpaint,
 patch-heal) → `detect.js` (`buildMask`: dark-candidate + components + cluster, optional
 text template) → `process.js` (orchestration: `cleanFullImage`, `cleanRoiScaled`,
@@ -35,7 +36,19 @@ text template) → `process.js` (orchestration: `cleanFullImage`, `cleanRoiScale
 `manual.js` (modal mask editor → normalized shapes) → `ui.js` → `app.js`.
 
 Each handler exposes `representative(file)` (image for the manual editor) and
-`process(file, cfg, manualSpec, onProgress)` → a result `{found,name,blob,previewBefore,previewAfter,...}`.
+`process(file, cfg, manualSpec, onProgress)` → a result
+`{found,name,blob,previewBefore,previewAfter,messageKey,messageParams,...}`.
+
+## UI: language + preview
+
+- **Bilingual (中文 / English).** Static markup carries `data-i18n="key"` (or
+  `data-i18n-html` for the disclaimer); dynamic strings call `NLM.t(key,params)` and
+  re-render on the `lang` bus event. Handlers return a `messageKey`+`messageParams`
+  (not a baked string) so status text localises live. To add UI text, add the key to
+  **both** `zh` and `en` tables in `i18n.js`. Default language is `zh`.
+- **Large side-by-side before/after** (`#nlm-preview`): the layout is widened to
+  ~1560px for 1920×1080 desktops; clicking a row (or finishing a process) selects it and
+  fills the two `.preview-stage`s, each scaled to fit (≤2.5× upscale, ≤70vh).
 
 ## Hard-won gotchas (already fixed — don't regress)
 

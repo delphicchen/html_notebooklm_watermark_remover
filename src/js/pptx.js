@@ -94,9 +94,8 @@
               name: NLM.withSuffix(file.name, '_cleaned'),
               blob: blob, mime: PPTX_MIME, pageCount: names.length,
               previewBefore: preview.before, previewAfter: preview.after,
-              message: patched > 0
-                ? (patched + '/' + names.length + ' 張圖片已清除')
-                : '未偵測到浮水印 · no watermark detected'
+              messageKey: patched > 0 ? 'pptxCleaned' : 'noWatermark',
+              messageParams: patched > 0 ? { n: patched, t: names.length } : null
             };
           });
       });

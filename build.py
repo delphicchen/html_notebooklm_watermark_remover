@@ -22,6 +22,7 @@ DIST = os.path.join(ROOT, "dist")
 # Application modules, in load order. Each extends the global NLM namespace.
 APP_MODULES = [
     "core.js",
+    "i18n.js",
     "engine.js",
     "detect.js",
     "process.js",
