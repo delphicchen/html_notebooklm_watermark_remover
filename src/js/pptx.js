@@ -48,7 +48,7 @@
   };
 
   Handler.process = function (file, cfg, manualSpec, onProgress) {
-    var preview = { before: null, after: null };
+    var preview = { before: null, after: null, foundPage: false };
     return JSZip.loadAsync(file).then(function (zip) {
       var names = mediaEntries(zip);
       if (!names.length) throw new Error('PPTX 內找不到圖片 · no media images');
@@ -62,6 +62,11 @@
           return zip.file(name).async('blob')
             .then(function (b) { return NLM.blobToImageData(b); })
             .then(function (img) {
+              // Always capture the first decodable image as a baseline preview
+              if (!preview.before) {
+                preview.before = NLM.imageDataToCanvas(img);
+                preview.after = NLM.imageDataToCanvas(img);
+              }
               var res, found;
               if (Process.specHasShapes(manualSpec)) {
                 var mask = Process.maskFromSpec(manualSpec, img.width, img.height);
@@ -74,9 +79,10 @@
               if (!found) return;            // leave original media untouched
               patched++;
               var outData = res.imageData;
-              if (!preview.before) {         // capture first cleaned image as preview
+              if (!preview.foundPage) {      // capture first cleaned image as preview
                 preview.before = NLM.imageDataToCanvas(img);
                 preview.after = NLM.imageDataToCanvas(outData);
+                preview.foundPage = true;
               }
               var q = (mime === 'image/jpeg' || mime === 'image/webp') ? 0.95 : undefined;
               return NLM.imageDataToBlob(outData, mime, q).then(function (blob) {

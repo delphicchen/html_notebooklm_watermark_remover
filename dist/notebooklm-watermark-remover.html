@@ -593,6 +593,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       previewTitle: '預覽對比',
       previewBefore: '原圖',
       previewAfter: '結果',
+      previewOriginal: '原始檔案',
       previewEmpty: '處理檔案後，點選下方項目即可在此並列檢視大圖對比。',
 
       footerDisclaimer: '<strong>使用聲明：</strong>本工具僅供處理你<strong>擁有或有權修改</strong>的內容。是否符合各服務的使用條款由使用者自行負責。所有處理皆在你的瀏覽器本機完成，不會連網或上傳。',
@@ -646,6 +647,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       previewTitle: 'Before / After',
       previewBefore: 'Before',
       previewAfter: 'After',
+      previewOriginal: 'Original',
       previewEmpty: 'Process a file, then select it below to compare before / after side by side here.',
 
       footerDisclaimer: '<strong>Disclaimer:</strong> Use this tool only on content you <strong>own or have the right to modify</strong>. Compliance with each service’s terms is your responsibility. All processing happens locally in your browser — nothing is uploaded.',
@@ -1463,7 +1465,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   };
 
   Handler.process = function (file, cfg, manualSpec, onProgress) {
-    var preview = { before: null, after: null };
+    var preview = { before: null, after: null, foundPage: false };
     return JSZip.loadAsync(file).then(function (zip) {
       var names = mediaEntries(zip);
       if (!names.length) throw new Error('PPTX 內找不到圖片 · no media images');
@@ -1477,6 +1479,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
           return zip.file(name).async('blob')
             .then(function (b) { return NLM.blobToImageData(b); })
             .then(function (img) {
+              // Always capture the first decodable image as a baseline preview
+              if (!preview.before) {
+                preview.before = NLM.imageDataToCanvas(img);
+                preview.after = NLM.imageDataToCanvas(img);
+              }
               var res, found;
               if (Process.specHasShapes(manualSpec)) {
                 var mask = Process.maskFromSpec(manualSpec, img.width, img.height);
@@ -1489,9 +1496,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
               if (!found) return;            // leave original media untouched
               patched++;
               var outData = res.imageData;
-              if (!preview.before) {         // capture first cleaned image as preview
+              if (!preview.foundPage) {      // capture first cleaned image as preview
                 preview.before = NLM.imageDataToCanvas(img);
                 preview.after = NLM.imageDataToCanvas(outData);
+                preview.foundPage = true;
               }
               var q = (mime === 'image/jpeg' || mime === 'image/webp') ? 0.95 : undefined;
               return NLM.imageDataToBlob(outData, mime, q).then(function (blob) {
@@ -1597,7 +1605,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     }).then(function (both) {
       var doc = both[0], libDoc = both[1];
       var pageCount = doc.numPages, patched = 0;
-      var preview = { before: null, after: null };
+      var preview = { before: null, after: null, foundPage: false };
       var chain = Promise.resolve();
 
       for (var p = 1; p <= pageCount; p++) {
@@ -1624,6 +1632,20 @@ https://github.com/nodeca/pako/blob/main/LICENSE
             };
 
             return renderPage(page, scale).then(function (r) {
+              // Always capture the first page as a baseline preview (before=after
+              // when no watermark is found). If a later page is the first to have
+              // a watermark, the preview will be replaced with that page's result.
+              var needPreview = !preview.before || (!preview.foundPage && pageNum > 1);
+              var fullImg = null;
+              if (needPreview || pageNum === 1) {
+                fullImg = r.ctx.getImageData(0, 0, r.canvas.width, r.canvas.height);
+                if (!preview.before) {
+                  // first page: set a baseline preview (same image for before & after)
+                  preview.before = NLM.imageDataToCanvas(fullImg);
+                  preview.after = NLM.imageDataToCanvas(fullImg);
+                }
+              }
+
               var crop = cropRect(r, region), roi = crop.imageData;
               if (roi.width < 6 || roi.height < 6) return false;
 
@@ -1650,12 +1672,14 @@ https://github.com/nodeca/pako/blob/main/LICENSE
               var sw = Math.min(roi.width - sx, mb.w + 2 * pad), sh = Math.min(roi.height - sy, mb.h + 2 * pad);
               var sub = NLM.cropImageData(roi, sx, sy, sw, sh);
 
-              if (pageNum === 1 && !preview.before) {
-                var beforeImg = r.ctx.getImageData(0, 0, r.canvas.width, r.canvas.height);
-                preview.before = NLM.imageDataToCanvas(beforeImg);
-                var aft = NLM.cloneImageData(beforeImg);
+              // Update preview with the first page that has a watermark found
+              if (!preview.foundPage) {
+                if (!fullImg) fullImg = r.ctx.getImageData(0, 0, r.canvas.width, r.canvas.height);
+                preview.before = NLM.imageDataToCanvas(fullImg);
+                var aft = NLM.cloneImageData(fullImg);
                 NLM.pasteImageData(aft, sub, crop.dx + sx, crop.dy + sy);
                 preview.after = NLM.imageDataToCanvas(aft);
+                preview.foundPage = true;
               }
 
               // map the sub-rect (roi pixels, y-down) back to user coords (y-up)
@@ -1677,6 +1701,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
               if (ok) patched++;
               if (onProgress) onProgress(pageNum, pageCount);
             });
+          }).catch(function (err) {
+            // Per-page error: log and continue with next page instead of aborting
+            console.warn('[NLM.PdfHandler] page ' + pageNum + ' skipped:', err);
+            if (onProgress) onProgress(pageNum, pageCount);
           });
         })(p);
       }
@@ -1863,6 +1891,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
  * comparison for the selected item, and lets the user download individually or
  * as a zip. All user-facing strings go through NLM.t() and re-render on the
  * `lang` bus event (中文 / English toggle).
+ *
+ * On file load, a representative preview is generated immediately so users can
+ * see the original image before any processing. After processing, the preview
+ * upgrades to a side-by-side before/after comparison.
  */
 (function () {
   'use strict';
@@ -1918,15 +1950,47 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     return c;
   }
 
+  /* ------------------- representative preview loader ------------------- */
+  // Asynchronously load a representative preview for a queue item right after
+  // the file is added: get the representative image, then immediately run
+  // watermark detection + removal on it, so the user sees a before/after
+  // comparison even before clicking "Process".
+  function loadRepresentative(it) {
+    var handler = HANDLERS[it.kind]();
+    handler.representative(it.file).then(function (rep) {
+      var img = rep.imageData;
+      it.repBefore = NLM.imageDataToCanvas(img);
+      // Run auto detection on the representative to produce an instant preview
+      var cfg = readConfig();
+      var res = NLM.Process.cleanFullImage(img, cfg);
+      var outData = res.found ? res.imageData : img;
+      it.repAfter = NLM.imageDataToCanvas(outData);
+      it.repFound = res.found;
+      renderRow(it);
+      // auto-select the first file for large preview
+      if (selectedId == null) selectItem(it.id);
+      else if (selectedId === it.id) renderPreview();
+    }).catch(function (err) {
+      console.warn('[NLM.UI] representative preview failed for', it.file.name, err);
+    });
+  }
+
   /* ----------------------------- queue ----------------------------- */
   function addFiles(files) {
+    var firstId = null;
     Array.prototype.forEach.call(files, function (file) {
       var ext = NLM.extOf(file.name);
       var kind = SUPPORTED[ext];
       if (!kind) { flash(NLM.t('flashUnsupported', { name: file.name })); return; }
-      queue.push({ id: ++seq, file: file, kind: kind, mode: 'auto', manualSpec: null, status: 'pending', result: null });
+      var it = { id: ++seq, file: file, kind: kind, mode: 'auto', manualSpec: null,
+                 status: 'pending', result: null, repBefore: null, repAfter: null, repFound: false };
+      queue.push(it);
+      if (!firstId) firstId = it.id;
+      loadRepresentative(it);
     });
     render();
+    // select the first newly-added file if nothing is selected
+    if (firstId && selectedId == null) selectItem(firstId);
   }
 
   function removeItem(id) {
@@ -1947,6 +2011,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     }).catch(function (err) {
       console.error(err); it.status = 'error'; it.error = (err && err.message) || String(err);
     }).then(function () {
+      // Always select item for preview if preview data exists (handlers now
+      // always generate before/after even when no watermark was found)
       if (it.result && it.result.previewBefore) selectItem(it.id);
       else { renderRow(it); updateToolbar(); }
     });
@@ -1994,10 +2060,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   function fillStage(stage, srcCanvas) {
     stage.innerHTML = '';
     if (!srcCanvas) return;
-    var boxW = Math.max(140, stage.clientWidth - 16);
-    var boxH = Math.min(Math.round(window.innerHeight * 0.7), 700);
+    var boxW = Math.max(200, stage.clientWidth - 16);
+    var boxH = Math.min(Math.round(window.innerHeight * 0.78), 820);
     var scale = Math.min(boxW / srcCanvas.width, boxH / srcCanvas.height);
-    scale = Math.min(scale, 2.5);
+    scale = Math.min(scale, 3);
     if (!(scale > 0)) scale = 1;
     var w = Math.max(1, Math.round(srcCanvas.width * scale));
     var hh = Math.max(1, Math.round(srcCanvas.height * scale));
@@ -2010,12 +2076,33 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   function renderPreview() {
     var panel = $('nlm-preview');
     var it = selectedId != null ? find(selectedId) : null;
-    var has = it && it.result && it.result.previewBefore;
-    if (!has) { panel.hidden = true; return; }
+
+    // Two sources of before/after:
+    // 1. result.previewBefore/After — from actual processing (final)
+    // 2. repBefore/repAfter — from representative quick preview (instant on load)
+    var hasResult = it && it.result && it.result.previewBefore;
+    var hasRep = it && it.repBefore;
+
+    if (!hasResult && !hasRep) { panel.hidden = true; return; }
     panel.hidden = false;
     $('nlm-preview-name').textContent = it.file.name;
-    fillStage($('nlm-pv-before'), it.result.previewBefore);
-    fillStage($('nlm-pv-after'), it.result.previewAfter);
+
+    var beforeStage = $('nlm-pv-before');
+    var afterStage = $('nlm-pv-after');
+    var beforeLabel = beforeStage.parentNode.querySelector('figcaption');
+    var afterLabel = afterStage.parentNode.querySelector('figcaption');
+
+    // Always show side-by-side before/after; use result data if available,
+    // otherwise use the representative quick-preview data
+    var bCanvas = hasResult ? it.result.previewBefore : it.repBefore;
+    var aCanvas = hasResult ? it.result.previewAfter : it.repAfter;
+
+    beforeStage.parentNode.style.display = '';
+    afterStage.parentNode.style.display = '';
+    beforeLabel.textContent = NLM.t('previewBefore');
+    afterLabel.textContent = NLM.t('previewAfter');
+    fillStage(beforeStage, bCanvas);
+    fillStage(afterStage, aCanvas);
   }
 
   /* ----------------------------- render ----------------------------- */
@@ -2053,14 +2140,18 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
   function buildRow(it) {
     var previews = [];
-    if (it.result && it.result.previewBefore) {
+    // Use result data if processed, otherwise use rep quick-preview
+    var bSrc = (it.result && it.result.previewBefore) ? it.result.previewBefore : it.repBefore;
+    var aSrc = (it.result && it.result.previewAfter) ? it.result.previewAfter : it.repAfter;
+    if (bSrc) {
       previews.push(h('div', { class: 'nlm-pv' }, [
-        h('span', { class: 'nlm-pv-label', text: NLM.t('previewBefore') }), thumb(it.result.previewBefore, 150)
+        h('span', { class: 'nlm-pv-label', text: NLM.t('previewBefore') }), thumb(bSrc, 150)
       ]));
       previews.push(h('div', { class: 'nlm-pv' }, [
-        h('span', { class: 'nlm-pv-label', text: NLM.t('previewAfter') }), thumb(it.result.previewAfter, 150)
+        h('span', { class: 'nlm-pv-label', text: NLM.t('previewAfter') }), thumb(aSrc, 150)
       ]));
     } else {
+      // Still loading representative
       previews.push(h('div', { class: 'nlm-thumb-ph', text: badge(it.kind) }));
     }
 

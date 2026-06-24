@@ -76,7 +76,7 @@
     }).then(function (both) {
       var doc = both[0], libDoc = both[1];
       var pageCount = doc.numPages, patched = 0;
-      var preview = { before: null, after: null };
+      var preview = { before: null, after: null, foundPage: false };
       var chain = Promise.resolve();
 
       for (var p = 1; p <= pageCount; p++) {
@@ -103,6 +103,20 @@
             };
 
             return renderPage(page, scale).then(function (r) {
+              // Always capture the first page as a baseline preview (before=after
+              // when no watermark is found). If a later page is the first to have
+              // a watermark, the preview will be replaced with that page's result.
+              var needPreview = !preview.before || (!preview.foundPage && pageNum > 1);
+              var fullImg = null;
+              if (needPreview || pageNum === 1) {
+                fullImg = r.ctx.getImageData(0, 0, r.canvas.width, r.canvas.height);
+                if (!preview.before) {
+                  // first page: set a baseline preview (same image for before & after)
+                  preview.before = NLM.imageDataToCanvas(fullImg);
+                  preview.after = NLM.imageDataToCanvas(fullImg);
+                }
+              }
+
               var crop = cropRect(r, region), roi = crop.imageData;
               if (roi.width < 6 || roi.height < 6) return false;
 
@@ -129,12 +143,14 @@
               var sw = Math.min(roi.width - sx, mb.w + 2 * pad), sh = Math.min(roi.height - sy, mb.h + 2 * pad);
               var sub = NLM.cropImageData(roi, sx, sy, sw, sh);
 
-              if (pageNum === 1 && !preview.before) {
-                var beforeImg = r.ctx.getImageData(0, 0, r.canvas.width, r.canvas.height);
-                preview.before = NLM.imageDataToCanvas(beforeImg);
-                var aft = NLM.cloneImageData(beforeImg);
+              // Update preview with the first page that has a watermark found
+              if (!preview.foundPage) {
+                if (!fullImg) fullImg = r.ctx.getImageData(0, 0, r.canvas.width, r.canvas.height);
+                preview.before = NLM.imageDataToCanvas(fullImg);
+                var aft = NLM.cloneImageData(fullImg);
                 NLM.pasteImageData(aft, sub, crop.dx + sx, crop.dy + sy);
                 preview.after = NLM.imageDataToCanvas(aft);
+                preview.foundPage = true;
               }
 
               // map the sub-rect (roi pixels, y-down) back to user coords (y-up)
@@ -156,6 +172,10 @@
               if (ok) patched++;
               if (onProgress) onProgress(pageNum, pageCount);
             });
+          }).catch(function (err) {
+            // Per-page error: log and continue with next page instead of aborting
+            console.warn('[NLM.PdfHandler] page ' + pageNum + ' skipped:', err);
+            if (onProgress) onProgress(pageNum, pageCount);
           });
         })(p);
       }

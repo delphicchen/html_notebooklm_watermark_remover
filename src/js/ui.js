@@ -5,6 +5,10 @@
  * comparison for the selected item, and lets the user download individually or
  * as a zip. All user-facing strings go through NLM.t() and re-render on the
  * `lang` bus event (中文 / English toggle).
+ *
+ * On file load, a representative preview is generated immediately so users can
+ * see the original image before any processing. After processing, the preview
+ * upgrades to a side-by-side before/after comparison.
  */
 (function () {
   'use strict';
@@ -60,15 +64,47 @@
     return c;
   }
 
+  /* ------------------- representative preview loader ------------------- */
+  // Asynchronously load a representative preview for a queue item right after
+  // the file is added: get the representative image, then immediately run
+  // watermark detection + removal on it, so the user sees a before/after
+  // comparison even before clicking "Process".
+  function loadRepresentative(it) {
+    var handler = HANDLERS[it.kind]();
+    handler.representative(it.file).then(function (rep) {
+      var img = rep.imageData;
+      it.repBefore = NLM.imageDataToCanvas(img);
+      // Run auto detection on the representative to produce an instant preview
+      var cfg = readConfig();
+      var res = NLM.Process.cleanFullImage(img, cfg);
+      var outData = res.found ? res.imageData : img;
+      it.repAfter = NLM.imageDataToCanvas(outData);
+      it.repFound = res.found;
+      renderRow(it);
+      // auto-select the first file for large preview
+      if (selectedId == null) selectItem(it.id);
+      else if (selectedId === it.id) renderPreview();
+    }).catch(function (err) {
+      console.warn('[NLM.UI] representative preview failed for', it.file.name, err);
+    });
+  }
+
   /* ----------------------------- queue ----------------------------- */
   function addFiles(files) {
+    var firstId = null;
     Array.prototype.forEach.call(files, function (file) {
       var ext = NLM.extOf(file.name);
       var kind = SUPPORTED[ext];
       if (!kind) { flash(NLM.t('flashUnsupported', { name: file.name })); return; }
-      queue.push({ id: ++seq, file: file, kind: kind, mode: 'auto', manualSpec: null, status: 'pending', result: null });
+      var it = { id: ++seq, file: file, kind: kind, mode: 'auto', manualSpec: null,
+                 status: 'pending', result: null, repBefore: null, repAfter: null, repFound: false };
+      queue.push(it);
+      if (!firstId) firstId = it.id;
+      loadRepresentative(it);
     });
     render();
+    // select the first newly-added file if nothing is selected
+    if (firstId && selectedId == null) selectItem(firstId);
   }
 
   function removeItem(id) {
@@ -89,6 +125,8 @@
     }).catch(function (err) {
       console.error(err); it.status = 'error'; it.error = (err && err.message) || String(err);
     }).then(function () {
+      // Always select item for preview if preview data exists (handlers now
+      // always generate before/after even when no watermark was found)
       if (it.result && it.result.previewBefore) selectItem(it.id);
       else { renderRow(it); updateToolbar(); }
     });
@@ -136,10 +174,10 @@
   function fillStage(stage, srcCanvas) {
     stage.innerHTML = '';
     if (!srcCanvas) return;
-    var boxW = Math.max(140, stage.clientWidth - 16);
-    var boxH = Math.min(Math.round(window.innerHeight * 0.7), 700);
+    var boxW = Math.max(200, stage.clientWidth - 16);
+    var boxH = Math.min(Math.round(window.innerHeight * 0.78), 820);
     var scale = Math.min(boxW / srcCanvas.width, boxH / srcCanvas.height);
-    scale = Math.min(scale, 2.5);
+    scale = Math.min(scale, 3);
     if (!(scale > 0)) scale = 1;
     var w = Math.max(1, Math.round(srcCanvas.width * scale));
     var hh = Math.max(1, Math.round(srcCanvas.height * scale));
@@ -152,12 +190,33 @@
   function renderPreview() {
     var panel = $('nlm-preview');
     var it = selectedId != null ? find(selectedId) : null;
-    var has = it && it.result && it.result.previewBefore;
-    if (!has) { panel.hidden = true; return; }
+
+    // Two sources of before/after:
+    // 1. result.previewBefore/After — from actual processing (final)
+    // 2. repBefore/repAfter — from representative quick preview (instant on load)
+    var hasResult = it && it.result && it.result.previewBefore;
+    var hasRep = it && it.repBefore;
+
+    if (!hasResult && !hasRep) { panel.hidden = true; return; }
     panel.hidden = false;
     $('nlm-preview-name').textContent = it.file.name;
-    fillStage($('nlm-pv-before'), it.result.previewBefore);
-    fillStage($('nlm-pv-after'), it.result.previewAfter);
+
+    var beforeStage = $('nlm-pv-before');
+    var afterStage = $('nlm-pv-after');
+    var beforeLabel = beforeStage.parentNode.querySelector('figcaption');
+    var afterLabel = afterStage.parentNode.querySelector('figcaption');
+
+    // Always show side-by-side before/after; use result data if available,
+    // otherwise use the representative quick-preview data
+    var bCanvas = hasResult ? it.result.previewBefore : it.repBefore;
+    var aCanvas = hasResult ? it.result.previewAfter : it.repAfter;
+
+    beforeStage.parentNode.style.display = '';
+    afterStage.parentNode.style.display = '';
+    beforeLabel.textContent = NLM.t('previewBefore');
+    afterLabel.textContent = NLM.t('previewAfter');
+    fillStage(beforeStage, bCanvas);
+    fillStage(afterStage, aCanvas);
   }
 
   /* ----------------------------- render ----------------------------- */
@@ -195,14 +254,18 @@
 
   function buildRow(it) {
     var previews = [];
-    if (it.result && it.result.previewBefore) {
+    // Use result data if processed, otherwise use rep quick-preview
+    var bSrc = (it.result && it.result.previewBefore) ? it.result.previewBefore : it.repBefore;
+    var aSrc = (it.result && it.result.previewAfter) ? it.result.previewAfter : it.repAfter;
+    if (bSrc) {
       previews.push(h('div', { class: 'nlm-pv' }, [
-        h('span', { class: 'nlm-pv-label', text: NLM.t('previewBefore') }), thumb(it.result.previewBefore, 150)
+        h('span', { class: 'nlm-pv-label', text: NLM.t('previewBefore') }), thumb(bSrc, 150)
       ]));
       previews.push(h('div', { class: 'nlm-pv' }, [
-        h('span', { class: 'nlm-pv-label', text: NLM.t('previewAfter') }), thumb(it.result.previewAfter, 150)
+        h('span', { class: 'nlm-pv-label', text: NLM.t('previewAfter') }), thumb(aSrc, 150)
       ]));
     } else {
+      // Still loading representative
       previews.push(h('div', { class: 'nlm-thumb-ph', text: badge(it.kind) }));
     }
 

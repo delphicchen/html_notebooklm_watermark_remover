@@ -40,6 +40,7 @@
       previewTitle: '預覽對比',
       previewBefore: '原圖',
       previewAfter: '結果',
+      previewOriginal: '原始檔案',
       previewEmpty: '處理檔案後，點選下方項目即可在此並列檢視大圖對比。',
 
       footerDisclaimer: '<strong>使用聲明：</strong>本工具僅供處理你<strong>擁有或有權修改</strong>的內容。是否符合各服務的使用條款由使用者自行負責。所有處理皆在你的瀏覽器本機完成，不會連網或上傳。',
@@ -93,6 +94,7 @@
       previewTitle: 'Before / After',
       previewBefore: 'Before',
       previewAfter: 'After',
+      previewOriginal: 'Original',
       previewEmpty: 'Process a file, then select it below to compare before / after side by side here.',
 
       footerDisclaimer: '<strong>Disclaimer:</strong> Use this tool only on content you <strong>own or have the right to modify</strong>. Compliance with each service’s terms is your responsibility. All processing happens locally in your browser — nothing is uploaded.',
